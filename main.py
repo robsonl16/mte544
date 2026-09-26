@@ -18,8 +18,8 @@ def compute_pose(v, omega, dt, x, y, theta):
     return x_new, y_new, theta_new
 
 
-def plot_pose_history(pose_history, dt):
-    """Plot the robot's path and heading over time.
+def plot_pose_history(pose_history, dt, case_name="Robot pose"):
+    """Plot x vs y and each pose variable against time for one case.
 
     pose_history should contain rows of (x, y, theta), including the initial
     pose. Angles are in radians and dt is in seconds.
@@ -33,43 +33,33 @@ def plot_pose_history(pose_history, dt):
     times = np.arange(len(poses)) * dt
     x, y, theta = poses.T
 
-    fig, (path_ax, heading_ax) = plt.subplots(1, 2, figsize=(12, 5))
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    path_ax, x_ax, y_ax, theta_ax = axes.flat
 
     path_ax.plot(x, y, color="tab:blue", label="Path")
     path_ax.scatter(x[0], y[0], color="tab:green", zorder=3, label="Start")
     path_ax.scatter(x[-1], y[-1], color="tab:red", zorder=3, label="End")
-
-    # Draw a few arrows so the robot's orientation is visible along its path.
-    arrow_stride = max(1, len(poses) // 12)
-    arrow_indices = np.arange(0, len(poses), arrow_stride)
-    arrow_length = 0.08 * max(np.ptp(x), np.ptp(y), 1.0)
-    path_ax.quiver(
-        x[arrow_indices],
-        y[arrow_indices],
-        np.cos(theta[arrow_indices]) * arrow_length,
-        np.sin(theta[arrow_indices]) * arrow_length,
-        angles="xy",
-        scale_units="xy",
-        scale=1,
-        color="tab:orange",
-        label="Heading",
-    )
-    path_ax.set_title("Robot path")
+    path_ax.set_title("Top view: y vs x")
     path_ax.set_xlabel("x (m)")
     path_ax.set_ylabel("y (m)")
     path_ax.set_aspect("equal", adjustable="datalim")
     path_ax.grid(True, alpha=0.3)
     path_ax.legend()
 
-    # Unwrap for display so crossing 2π does not look like a sudden jump.
-    heading_ax.plot(times, np.unwrap(theta), color="tab:purple")
-    heading_ax.set_title("Heading over time")
-    heading_ax.set_xlabel("Time (s)")
-    heading_ax.set_ylabel("θ (rad, unwrapped)")
-    heading_ax.grid(True, alpha=0.3)
+    for axis, values, name, color, units in (
+        (x_ax, x, "x position", "tab:blue", "m"),
+        (y_ax, y, "y position", "tab:green", "m"),
+        (theta_ax, theta, "orientation θ", "tab:purple", "rad"),
+    ):
+        axis.plot(times, values, color=color)
+        axis.set_title(f"{name} vs time")
+        axis.set_xlabel("Time (s)")
+        axis.set_ylabel(f"{name} ({units})")
+        axis.grid(True, alpha=0.3)
 
+    fig.suptitle(case_name)
     fig.tight_layout()
-    return fig, (path_ax, heading_ax)
+    return fig, axes
 
 
 def main():
